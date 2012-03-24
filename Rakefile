@@ -17,9 +17,9 @@ Jeweler::Tasks.new do |gem|
   gem.name = "okuyama"
   gem.homepage = "http://github.com/haracane/okuyama"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "hara2001@gmail.com"
+  gem.summary = %Q{okuyama client for Ruby}
+  gem.description = %Q{okuyama client for Ruby}
+  gem.email = "haracane@gmail.com"
   gem.authors = ["Kenji Hara"]
   # dependencies defined in Gemfile
 end
