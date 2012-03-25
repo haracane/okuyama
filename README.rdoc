@@ -13,9 +13,9 @@ Simple example is as below:
 
  require 'okuyama'
 
- oc = Okuyama::Client.new(:host=>'localhost', :port=>8888)
- oc.set_value('key', 'val')
- value = dc.get_value('key')
+ okuyama = Okuyama::Client.new(:host=>'localhost', :port=>8888)
+ okuyama.set_value('key', 'val')
+ value = okuyama.get_value('key')
 
 == Contributing to okuyama
  
