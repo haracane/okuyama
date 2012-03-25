@@ -1,6 +1,21 @@
 = okuyama
 
-Description goes here.
+'okuyama' is a high performance pure Ruby client for accessing okuyama master nodes.
+
+== Install
+
+You can install okuyama by gem.
+ gem install okuyama
+
+== Usage
+
+Simple example is as below:
+
+ require 'okuyama'
+
+ oc = Okuyama::Client.new(:host=>'localhost', :port=>8888)
+ oc.set_value('key', 'val')
+ value = dc.get_value('key')
 
 == Contributing to okuyama
  
