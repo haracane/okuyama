@@ -1,7 +1,7 @@
 module Okuyama
   class Client < FastClient
     public
-    attr_accessor :to_i_flag, :parse_flag
+    attr_accessor :debug, :to_i_flag, :parse_flag
     
     def initialize(options)
       super
@@ -34,8 +34,8 @@ module Okuyama
       # Disable debug message for better performance
       # Okuyama.logger.debug "Okuyama::Client.protocol.set_value(key=#{key.inspect},val=#{val.inspect},tag_list=#{tag_list.inspect})"
 
-      message = @protocol.set_value(key, val, tag_list)
-      return self.request(message,options)
+      @protocol.set_value(self.socket, key, val, tag_list)
+      return self.recvs
     end
     
     def set_new_value(key, val, *args)
@@ -60,8 +60,8 @@ module Okuyama
       # Disable debug message for better performance
       # Okuyama.logger.debug "Okuyama::Client.protocol.set_value(key=#{key.inspect},val=#{val.inspect},tag_list=#{tag_list.inspect})"
 
-      message = @protocol.set_new_value(key, val, tag_list)
-      return self.request(message,options)
+      @protocol.set_new_value(self.socket, key, val, tag_list)
+      return self.recvs
     end
     
     def set_value_version_check(key, val, version, *args)
@@ -86,8 +86,8 @@ module Okuyama
       # Disable debug message for better performance
       # Okuyama.logger.debug "Okuyama::Client.protocol.set_value(key=#{key.inspect},val=#{val.inspect},tag_list=#{tag_list.inspect})"
 
-      message = @protocol.set_value_version_check(key, val, version, tag_list)
-      return self.request(message,options)
+      @protocol.set_value_version_check(self.socket, key, val, version, tag_list)
+      return self.recvs
     end
     
     def get_tag_keys(tag, *args, &block)
@@ -99,19 +99,21 @@ module Okuyama
       elsif 0 < argc then
         flag = args[0]
       end
-      message = @protocol.get_tag_keys(tag, flag)
-      return self.request(message,options,&block)
+      @protocol.get_tag_keys(self.socket, tag, flag)
+      return self.recvs
     end
 
     protected    
     def each(&block)
-      return super(&block) if ! @prase_flag
+      return super(&block) if ! @parse_flag
       if block_given? then
-        while result = socket.gets do
-          if result == "END¥n" then
+        while line = socket.gets do
+          Okuyama.logger.debug "recv: #{line.inspect}" if @debug
+          line.chomp!
+          if line == "END" then
             break
           else
-            result = self.parse_result(result)
+            result = self.parse_result(line)
             yield(result)
           end
         end
@@ -122,15 +124,16 @@ module Okuyama
       return super if ! @parse_flag
       ret = []
       self.each { |record|
-        STDERR.puts record.inspect
         ret.push record
       }
-      return record
+      return ret
     end
     
-    def gets
+    def recvs
       line = super
-      return self.parse_result(line.chomp) if @parse_flag
+      # Disable debug message for better performance
+      Okuyama.logger.debug "recv: #{line.inspect}" if @debug
+      return self.parse_result(line) if @parse_flag
       return line
     end
 
@@ -138,7 +141,7 @@ module Okuyama
       begin
         result = @protocol.parse_line_result(result, @to_i_flag)
       rescue Okuyama::ServerError => e
-        raise Okuyama::ServerError, "#{e.message}, sent message = #{message.inspect}"
+        raise Okuyama::ServerError, "#{e.message}, message = #{result.inspect}"
       end
       return result
     end

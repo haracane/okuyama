@@ -1,7 +1,7 @@
 module Okuyama
   class FastClient
     public
-    attr_reader :host, :port, :timeout, :retry_max
+    attr_reader :host, :port, :timeout, :retry_max, :protocol
     attr_accessor :base64_encode_flag
     
     def initialize(options)
@@ -36,88 +36,82 @@ module Okuyama
     end
     
     def init_count
-      message = @protocol.init_count
-      return self.request(message)
+      @protocol.init_count(self.socket)
+      return self.recvs
     end
     
     def set_value(key, val, tag_list=nil)
-      message = @protocol.set_value(key, val, tag_list)
-      return self.request(message)
+      @protocol.set_value(self.socket, key, val, tag_list)
+      return self.recvs
     end
     
     def get_value(key)
-      message = @protocol.get_value(key)
-      return self.request(message)
+      @protocol.get_value(self.socket, key)
+      return self.recvs
     end
     
     def get_tag_keys(tag, flag='false')
-      message = @protocol.get_tag_keys(tag, flag)
-      return self.request(message)
+      @protocol.get_tag_keys(self.socket, tag, flag)
+      return self.recvs
     end
     
     def remove_value(key)
-      message = @protocol.remove_value(key)
-      return self.request(message)
+      @protocol.remove_value(self.socket, key)
+      return self.recvs
     end
     
     def set_new_value(key, val, tag_list=nil)
-      message = @protocol.set_new_value(key, val, tag_list)
-      return self.request(message)
+      @protocol.set_new_value(self.socket, key, val, tag_list)
+      return self.recvs
     end
     
     def get_value_version_check(key)
-      message = @protocol.get_value_version_check(key)
-      return self.request(message)
+      @protocol.get_value_version_check(self.socket, key)
+      return self.recvs
     end
     
     def set_value_version_check(key, val, version, tag_list=nil)
-      message = @protocol.set_value_versin_check(key, val, version, tag_list)
-      return self.request(message)
+      @protocol.set_value_versin_check(self.socket, key, val, version, tag_list)
+      return self.recvs
     end
     
     def incr_value(key, val)
-      message = @protocol.incr_value(key, val)
-      return self.request(message)
+      @protocol.incr_value(self.socket, key, val.to_s)
+      return self.recvs
     end
     
     def decr_value(key, val)
-      message = @protocol.decr_value(key, val)
-      return self.request(message)
+      @protocol.decr_value(self.socket, key, val.to_s)
+      return self.recvs
     end
     
     def get_multi_value(key_list, &block)
-      message = @protocol.get_multi_value(key_list)
-      return self.request_lines(message, &block)
+      @protocol.get_multi_value(self.socket, key_list)
+      return self.recv_lines(&block)
     end
     
     def get_tag_values(tag, &block)
-      message = @protocol.get_tag_values(tag)
-      return self.request_lines(message, &block)
+      @protocol.get_tag_values(self.socket, tag)
+      return self.recv_lines(&block)
     end
 
     def remove_tag_from_key(tag, key)
-      message = @protocol.remove_tag_from_key(tag, key)
-      return self.request(message)
+      @protocol.remove_tag_from_key(self.socket, tag, key)
+      return self.recvs
     end
 
-    def set_value_and_create_index(key, value, tag_list=nil, group=nil, min_index_n=nil, max_index_n=nil)
-      message = @protocol.set_value_and_create_index(key, val, tag_list, group, min_n, max_n)
-      return self.request(message)
-    end
-
-    def set_value_and_create_index(key, value, options=nil)
+    def set_value_and_create_index(key, val, options=nil)
       if options then
         tag_list = options[:tags]
         group = options[:group]
         min_n = options[:min_n]
         max_n = options[:max_n]
+        min_n = min_n.to_s if min_n
+        max_n = max_n.to_s if max_n
       end
-      return self.set_value_and_create_index(key, val, tag_list, group, min_n, max_n)
-    end
-
-    def search_value(query_list, condition=nil, group=nil, nsize=nil)
-      message = @protocol.search_value(query_list, condition, group, nsize)
-      return self.request(message)
+      
+      @protocol.set_value_and_create_index(self.socket, key, val, tag_list, group, min_n, max_n)
+      return self.recvs
     end
 
     def search_value(query_list, options=nil)
@@ -126,43 +120,41 @@ module Okuyama
       end
       
       if options then
-        tag_list = options[:condition]
+        condition = options[:condition]
         group = options[:group]
-        min_index_n = options[:nsize]
+        nsize = options[:nsize]
+        nsize = nsize.to_s if nsize
+        case condition
+        when :and
+          condition = '1'
+        else :or
+          condition = '2'
+        end
       end
 
-      case condition
-      when :and
-        condition = '1'
-      else :or
-        condition = '2'
+      @protocol.search_value(self.socket, query_list, condition, group, nsize)
+      return self.recvs
+    end
+    
+    def method_missiong(method_id, *args, &block)
+      method_name = method_id.to_s
+      if method_name =~ /^message_of_/ then
+        next_method_name = $'
+        result = capture(:stdout) {
+          @protocol.send(method_name, $stdout, *args, &block)
+        }
+        return result
+      else
+        super
       end
-      return self.search_value(query_list, condition, group, nsize)
     end
 
     protected    
-    def send(message)
-      # Disable debug message for better performance
-      # Okuyama.logger.debug "send: #{message}"
-      retry_count = 0
-      begin
-        self.socket.puts(message)
-      rescue Exception=>e
-        if retry_count < @retry_max then
-          Okuyama.logger.error "ERROR: #{e.message}"
-          @socket.close
-          @socket = nil
-          retry_count += 1
-          retry
-        else
-          raise e
-        end
-      end
-    end
-    
+
     def each(&block)
       while line = socket.gets do
-        if line == "END¥n" then
+        line.chomp!
+        if line == "END" then
           break
         else
           yield(line)
@@ -173,7 +165,7 @@ module Okuyama
     def readlines
       ret = []
       while line = socket.gets do
-        if line == "END¥n" then
+        if line == "END" then
           break
         else
           ret.push line
@@ -182,17 +174,13 @@ module Okuyama
       return ret
     end
 
-    def gets
-      self.socket.gets
-    end
-
-    def request(message, options=nil)
-      self.send(message)
-      return self.gets
+    def recvs
+      line = self.socket.gets
+      line.chomp!
+      return line
     end
     
-    def request_lines(message, options=nil, &block)
-      self.send(message)
+    def recv_lines(&block)
       if block_given? then
         return self.each(&block)
       else
@@ -202,10 +190,11 @@ module Okuyama
     
     def socket
       if @socket.nil? then
+        retry_count = 0
         begin
           @socket = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)
           sockaddr = Socket.sockaddr_in(@port, @host)
-          if @timeout
+          if @timeout then
             secs = Integer(@timeout)
             usecs = Integer((@timeout - secs) * 1_000_000)
             optval = [secs, usecs].pack("l_2")
@@ -214,6 +203,15 @@ module Okuyama
           end
           @socket.connect(sockaddr)
         rescue Exception => e
+          if retry_count < @retry_max then
+            Okuyama.logger.error "ERROR: #{e.message}"
+            @socket.close if @socket != nil
+            @socket = nil
+            retry_count += 1
+            retry
+          else
+            raise e
+          end
           @socket = nil
           raise e
         end

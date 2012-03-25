@@ -1,6 +1,6 @@
 module Okuyama
   module Protocol
-    class Version1
+    class Version1 < AbstractProtocol
       def initialize(options=nil)
         if options then
           @base64_encode_flag = options[:base64_encode_flag]
@@ -22,69 +22,68 @@ module Okuyama
         return Base64.decode64(text)
       end
       
-      def init_count
-        return '0'
+      def init_count(socket)
+        socket.puts '0'
       end
       
-      def set_value(key, val, tag_list=nil)
-        return self.send_key_tags_value_message('1', key, tag_list, val)
+      def set_value(socket, key, val, tag_list=nil)
+        return self.send_key_tags_value_message(socket, '1', key, tag_list, val)
       end
       
-      def get_value(key)
-        return self.send_key_message('2', key)
+      def get_value(socket, key)
+        return self.send_key_message(socket, '2', key)
       end
 
-      def get_tag_keys(tag, flag)
-        return self.send_tag_flag_message('3', tag, flag)
+      def get_tag_keys(socket, tag, flag)
+        return self.send_tag_flag_message(socket, '3', tag, flag)
       end
   
-      def remove_value(key)
-        return self.send_key_dlock_message('5', key, '0')
+      def remove_value(socket, key)
+        return self.send_key_dlock_message(socket, '5', key, '0')
       end
   
-      def set_new_value(key, val, tag_list=nil)
-        return self.send_key_tags_value_message('6', key, tag_list, val)
+      def set_new_value(socket, key, val, tag_list=nil)
+        return self.send_key_tags_value_message(socket, '6', key, tag_list, val)
       end
       
-      def get_value_version_check(key)
-        return self.send_key_message('15', key)
+      def get_value_version_check(socket, key)
+        return self.send_key_message(socket, '15', key)
       end
       
-      def set_value_version_check(key, val, version, tag_list=nil)
-        return self.send_key_tags_value_message('16', key, tag_list, val, version)
+      def set_value_version_check(socket, key, val, version, tag_list=nil)
+        return self.send_key_tags_value_message(socket, '16', key, tag_list, val, version)
       end
   
-      def incr_value(key, val)
-        return self.send_key_value_message('13', key, val)
+      def incr_value(socket, key, val)
+        return self.send_key_value_message(socket, '13', key, val)
       end
       
-      def decr_value(key, val)
-        return self.send_key_value_message('14', key, val)
+      def decr_value(socket, key, val)
+        return self.send_key_value_message(socket, '14', key, val)
       end
       
-      def get_multi_value(key_list)
-        return self.send_key_message('22', key)
+      def get_multi_value(socket, key_list)
+        return self.send_keys_message(socket, '22', key_list)
       end
       
-      def get_tag_values(tag)
-        return self.send_tag_message('23', tag)
+      def get_tag_values(socket, tag)
+        return self.send_tag_message(socket, '23', tag)
       end
       
-      def remove_tag_from_key(tag, key)
-        return self.send_tag_key_message('40', tag, key)
+      def remove_tag_from_key(socket, tag, key)
+        return self.send_tag_key_message(socket, '40', tag, key)
       end
 
-      def set_value_and_create_index(key, val, tag_list=nil, group=nil, min_index_n='1', max_index_n='3')
-        return self.send_key_tags_value_group_index_message('42', key, tag_list, val, group, min_index_n, max_index_n)
+      def set_value_and_create_index(socket, key, val, tag_list=nil, group=nil, min_index_n='1', max_index_n='3')
+        return self.send_key_tags_value_group_index_message(socket, '42', key, tag_list, val, group, min_index_n, max_index_n)
       end
       
-      def search_value(query_list, condition='1', group=nil, nsize='3')
-        return self.send_key_condition_group_index_message('43', query_list, condition, group, nsize)
+      def search_value(socket, query_list, condition='1', group=nil, nsize='3')
+        return self.send_query_condition_group_index_message(socket, '43', query_list, condition, group, nsize)
       end
 
       def parse_line_result(result, to_i_flag=nil)
-        # STDERR.puts result
-        record = result.chomp.split(/,/)
+        record = result.split(/,/)
         
         opcode = record.shift
         exit_code = record.shift
@@ -115,12 +114,20 @@ module Okuyama
         when '4'   # get_tag_keys
           return record[0].split(/:/).map{|b|self.decode(b)}
         when '13'  # incr_value
-          result = self.decode(record[0])
-          result = result.to_i if to_i_flag
+          if to_i_flag then
+            result = Base64.decode64(record[0]).chomp
+            result = result.to_i
+          else
+            result = self.decode(record[0])
+          end
           return result
         when '14'  # decr_value
-          result = self.decode(record[0])
-          result = result.to_i if to_i_flag
+          if to_i_flag then
+            result = Base64.decode64(record[0]).chomp
+            result = result.to_i
+          else
+            result = self.decode(record[0])
+          end
           return result
         when '15'  # get_value_version_check
           record[0] = self.decode(record[0])
@@ -140,29 +147,47 @@ module Okuyama
       end
 
       protected
-      def send_key_message(opcode, key)
+      def send_key_message(socket, opcode, key)
         key_base64 = self.encode(key)
-        return "#{opcode},#{key_base64}"
+        socket.print opcode
+        socket.print ","
+        socket.print  key_base64
+        socket.puts
       end
 
-      def send_key_dlock_message(opcode, key, dlock)
+      def send_key_dlock_message(socket, opcode, key, dlock)
         key_base64 = self.encode(key)
-        return "#{opcode},#{key_base64},#{dlock}"
+        socket.print opcode
+        socket.print ","
+        socket.print  key_base64
+        socket.print ","
+        socket.print  dlock
+        socket.puts
       end
 
-      def send_keys_message(opcode, key_list)
+      def send_keys_message(socket, opcode, key_list)
         keys_base64 = key_list.map{|key|self.encode(key)}.join(',')
-        return "#{opcode},#{keys_base64}"
-      end
+        socket.print opcode
+        socket.print ","
+        socket.print  keys_base64
+        socket.puts
+     end
 
-      def send_key_value_message(opcode, key, val)
+      def send_key_value_message(socket, opcode, key, val)
         key_base64 = self.encode(key)
         val_base64 = self.encode(val)
-        dlock = 0
-        return "#{opcode},#{key_base64},#{dlock},#{val_base64}"
+        dlock = '0'
+        socket.print opcode
+        socket.print ","
+        socket.print  key_base64
+        socket.print ","
+        socket.print  dlock
+        socket.print ","
+        socket.print  val_base64
+        socket.puts
       end
       
-      def send_key_tags_value_message(opcode, key, tag_list, val, version=nil)
+      def send_key_tags_value_message(socket, opcode, key, tag_list, val, version=nil)
         key_base64 = self.encode(key)
         val_base64 = self.encode(val)
         tags = nil
@@ -170,15 +195,25 @@ module Okuyama
           tags = tag_list.map{|t|self.encode(t)}.join(':')
         end
         tags ||= "(B)"
-        dlock = 0
+        dlock = '0'
+        socket.print opcode
+        socket.print ","
+        socket.print  key_base64
+        socket.print ","
+        socket.print  tags
+        socket.print ","
+        socket.print  dlock
+        socket.print ","
+        socket.print  val_base64
+
         if version then
-          return "#{opcode},#{key_base64},#{tags},#{dlock},#{val_base64},#{version}"
-        else
-          return "#{opcode},#{key_base64},#{tags},#{dlock},#{val_base64}"
+          socket.print ","
+          socket.print  version
         end
+        socket.puts
       end
       
-      def send_key_tags_value_group_index_message(opcode, key, tag_list, val, group, min_index_n, max_index_n)
+      def send_key_tags_value_group_index_message(socket, opcode, key, tag_list, val, group, min_index_n, max_index_n)
         key_base64 = self.encode(key)
         val_base64 = self.encode(val)
 
@@ -188,7 +223,7 @@ module Okuyama
         end
         tags ||= "(B)"
 
-        dlock = 0
+        dlock = '0'
 
         group_base64 = nil
         if group then
@@ -196,27 +231,57 @@ module Okuyama
         end
         group_base64 ||= "(B)"
 
-        return "#{opcode},#{key_base64},#{tags},#{dlock},#{val_base64},#{group_base64},#{min_index_n},#{max_index_n}"
+        socket.print opcode
+        socket.print ","
+        socket.print  key_base64
+        socket.print ","
+        socket.print  tags
+        socket.print ","
+        socket.print  dlock
+        socket.print ","
+        socket.print  val_base64
+        socket.print ","
+        socket.print  group_base64
+        socket.print ","
+        socket.print  min_index_n
+        socket.print ","
+        socket.print  max_index_n
+        socket.puts
       end
 
-      def send_tag_message(opcode, tag)
+      def send_tag_message(socket, opcode, tag)
         tag_base64 = self.encode(tag)
-        return "#{opcode},#{tag_base64}"
+        socket.print opcode
+        socket.print ","
+        socket.print  tag_base64
+        socket.puts
       end
 
-      def send_tag_flag_message(opcode, tag, flag)
+      def send_tag_flag_message(socket, opcode, tag, flag)
         tag_base64 = self.encode(tag)
-        return "#{opcode},#{tag_base64},#{flag}"
+        socket.print opcode
+        socket.print ","
+        socket.print  tag_base64
+        socket.print ","
+        socket.print  flag
+        socket.puts
       end
 
-      def send_tag_key_message(opcode, key, val)
+      def send_tag_key_message(socket, opcode, tag, key)
         tag_base64 = self.encode(tag)
         key_base64 = self.encode(key)
-        dlock = 0
-        return "#{opcode},#{tag_base64},#{key_base64},#{dlock}"
+        dlock = '0'
+        socket.print opcode
+        socket.print ","
+        socket.print  tag_base64
+        socket.print ","
+        socket.print  key_base64
+        socket.print ","
+        socket.print  dlock
+        socket.puts
       end
 
-      def send_key_condition_group_index_message(opcode, query_list, condition, group, nsize)
+      def send_query_condition_group_index_message(socket, opcode, query_list, condition, group, nsize)
         queries = query_list.map{|q|self.encode(q)}.join(':')
         
         group_base64 = nil
@@ -224,7 +289,16 @@ module Okuyama
           group_base64 = self.encode(group)
         end
         group_base64 ||= "(B)"
-        return "#{opcode},#{queries},#{condition},#{group_base64},#{nsize}"
+        socket.print opcode
+        socket.print ","
+        socket.print  queries
+        socket.print ","
+        socket.print  condition
+        socket.print ","
+        socket.print  group_base64
+        socket.print ","
+        socket.print  nsize
+        socket.puts
       end
 
     end

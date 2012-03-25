@@ -7,6 +7,7 @@ module Okuyama
   autoload :Client, 'okuyama/client'
   autoload :FastClient, 'okuyama/fast_client'
   module Protocol
+    autoload :AbstractProtocol, 'okuyama/protocol/abstract_protocol'
     autoload :Version1, 'okuyama/protocol/version1'
   end
 

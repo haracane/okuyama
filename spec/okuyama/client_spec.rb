@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Okuyama::Client do
   
-  [true].each do |base64_encode_flag|
+  [nil, true, false].each do |base64_encode_flag|
     describe "when base64_encode_flag = #{base64_encode_flag}" do
         
       before :each do
@@ -17,6 +17,11 @@ describe Okuyama::Client do
         @testnewval1 = 'testnewval1'
         @testtag = 'testtag'
         @testnewtag = 'testnewtag'
+        @testgroup = 'testgroup'
+        @testnewgroup = 'testnewgroup'
+        @testquery1 = 'testval'
+        @testquery2 = 'val1'
+        @testnewquery = 'testnewval'
         
         if base64_encode_flag == false then 
           @testnumkey = Base64.encode64(@testnumkey).chomp
@@ -30,12 +35,24 @@ describe Okuyama::Client do
           @testnewval1 = Base64.encode64(@testnewval1).chomp
           @testtag = Base64.encode64(@testtag).chomp
           @testnewtag = Base64.encode64(@testnewtag).chomp
+          @testgroup = Base64.encode64(@testgroup).chomp
+          @testnewgroup = Base64.encode64(@testnewgroup).chomp
+          @testquery1 = Base64.encode64(@testquery1).chomp
+          @testquery2 = Base64.encode64(@testquery2).chomp
+          @testnewquery = Base64.encode64(@testnewquery).chomp
         end
         
         @client = Okuyama::Client.new(:host=>'localhost', :port=>8888, :base64_encode_flag=>base64_encode_flag)
-        @client.set_value(@testkey1, @testval1, @testtag)
-        @client.set_value(@testkey2, @testval2, @testtag)
+        @client.debug = true
+        @client.remove_value(@testnumkey)
+        @client.remove_value(@testkey1)
+        @client.remove_value(@testkey2)
         @client.remove_value(@testnewkey)
+        @client.remove_tag_from_key(@testnewtag, @testkey1)
+        @client.set_value(@testnumkey, @testnumval)
+        @client.set_value_and_create_index(@testkey1, @testval1, :tags=>[@testtag], :group=>@testgroup, :min_n=>1, :max_n=>3)
+        @client.set_value(@testkey2, @testval2, @testtag)
+
       end
     
       after :each do 
@@ -116,7 +133,7 @@ describe Okuyama::Client do
             key_list = @client.get_tag_keys(@testtag)
             key_list.include?(@testkey1).should be_true
             key_list = @client.get_tag_keys(@testnewtag)
-            key_list.include?(@testkey1).should be_true
+            key_list.include?(@testkey1).should be_false
           end
         end
         describe "when key does not exist," do
@@ -141,7 +158,7 @@ describe Okuyama::Client do
             key_list = @client.get_tag_keys(@testtag)
             key_list.include?(@testkey1).should be_true
             key_list = @client.get_tag_keys(@testnewtag)
-            key_list.include?(@testkey1).should be_true
+            key_list.include?(@testkey1).should be_false
           end
         end
         describe "when key does not exist," do
@@ -183,7 +200,7 @@ describe Okuyama::Client do
         end
         describe "when tag does not exist," do
           it "should return []" do
-            result = @client.get_tag_keys(@testnewkey)
+            result = @client.get_tag_keys(@testnewtag)
             result.should == []
           end
         end
@@ -411,7 +428,78 @@ describe Okuyama::Client do
         end
       end
     
-    
+      describe "get_multi_value(key)" do
+        describe "when all keys exist," do
+          it "should return values" do
+            result = @client.get_multi_value([@testkey1, @testkey2])
+            result.should == [@testval1, @testval2]
+          end
+        end
+        describe "when keys exist or not," do
+          it "should return existing values" do
+            result = @client.get_multi_value([@testkey1, @testnewkey])
+            result.should == [@testval1, nil]
+          end
+        end
+        describe "when no keys exist," do
+          it "should return nils" do
+            result = @client.get_multi_value([@testnewkey, @testnewkey])
+            result.should == [nil, nil]
+          end
+        end
+      end
+
+      describe "get_tag_values(tag)" do
+        describe "when keys exist," do
+          it "should return key-values" do
+            result = @client.get_tag_values(@testtag)
+            result.sort!{|a,b|a[0]<=>b[0]}
+            result.shift.should == [@testkey1, @testval1]
+            result.shift.should == [@testkey2, @testval2]
+            result.should == []
+          end
+        end
+        describe "when no keys exist," do
+          it "should return []" do
+            result = @client.get_tag_values(@testnewtag)
+            result.should == []
+          end
+        end
+      end
+
+      describe "remove_tag_from_key(tag, key)" do
+        describe "when tag&key exist," do
+          it "should remove tag from key" do
+            result = @client.remove_tag_from_key(@testtag, @testkey1)
+            result.should be_true
+            key_list = @client.get_tag_keys(@testtag)
+            key_list.include?(@testkey1).should be_false
+          end
+        end
+        describe "when tag&key do not exist," do
+          it "should fail" do
+            result = @client.remove_tag_from_key(@testnewtag, @testkey1)
+            result.should be_nil
+          end
+        end
+      end
+
+      describe "set_value_and_create_index(key, val)" do
+        describe "when key exists," do
+          it "should success" do
+            result = @client.set_value_and_create_index(@testkey1, @testval1)
+            result.should be_true
+          end
+        end
+        describe "when key does not exist," do
+          it "should success" do
+            result = @client.set_value_and_create_index(@testnewkey, @testnewval)
+            result.should be_true
+          end
+        end
+      end
+
+
     end
   end
 end
