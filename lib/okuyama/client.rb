@@ -141,6 +141,8 @@ module Okuyama
       begin
         result = @protocol.parse_line_result(result, @to_i_flag)
       rescue Okuyama::ServerError => e
+        STDERR.puts :close
+        self.close
         raise Okuyama::ServerError, "#{e.message}, message = #{result.inspect}"
       end
       return result

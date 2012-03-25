@@ -28,6 +28,7 @@ module Okuyama
         begin
           @socket.close
         rescue Exception=>e
+          @socket = nil
           raise e if raise_exception
           Okuyama.logger.error "ERROR: #{e.message}"
         end

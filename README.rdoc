@@ -9,14 +9,80 @@ You can install okuyama by gem.
 
 == Usage
 
-Simple example is as below:
+Create okuyama client:
 
- require 'okuyama'
+ require "okuyama"
 
- okuyama = Okuyama::Client.new(:host=>'localhost', :port=>8888)
- okuyama.set_value('key', 'val')
- value = okuyama.get_value('key')
+ okuyama = Okuyama::Client.new(:host=>"localhost", :port=>8888)
+ 
+Set value:
+ p okuyama.set_value("key", "val") # => true
+ 
+Get value:
+ p okuyama.get_value("key") # => "val"
+ 
+Remove value:
+ p okuyama.remove_value("key") # => true
+ p okuyama.get_value("key") # => nil
+ 
+Set tags:
+ p okuyama.set_value("key1", "val1", ["tag1"]) # => true
+ p okuyama.set_value("key2", "val2", ["tag1", "tag2"]) # => true
 
+Get keys from tag:
+ p okuyama.get_tag_keys("tag1")  # => ["key1", "key2"]
+ p okuyama.get_tag_keys("tag2")  # => ["key2"]
+ p okuyama.get_tag_keys("tag3")  # => []
+
+Get values from tag:
+ p okuyama.get_tag_values("tag1")  # => [["key1", "val1"], ["key2", "val2"]]
+ p okuyama.get_tag_values("tag2")  # => [["key2", "val2"]]
+ p okuyama.get_tag_values("tag3")  # => []
+
+Get values from tag with block:
+ p okuyama.get_tag_values("tag1"){|v| p v}
+ # => ["key1", "val1"]
+ # => ["key2", "val2"]
+
+Remove tag from key:
+ okuyama.remove_tag_from_key("tag1", "key2")
+ p okuyama.get_tag_keys("tag1")  # => ["key1"]
+ 
+Get multi values:
+ p okuyama.get_multi_value(["key1", "key2"]) # => ["val1", "val2"]
+
+Get multi values with block:
+ p okuyama.get_multi_value(["key1", "key2"]){|v| p v}
+ # => "val1"
+ # => "val2"
+ 
+Increment value:
+ okuyama.set_value("count", "10")
+ p okuyama.incr_value("count", 2) # => 12
+
+Decrement value:
+ p okuyama.decr_value("count", 3) # => 9
+
+Set new value:
+ p okuyama.set_new_value("key1", "val1") # => nil
+ p okuyama.set_new_value("key3", "val3") # => true
+
+Get value with version:
+ p okuyama.get_value_version_check("key1") # => ["val1", "1332676579458792037"]
+
+Set value with version check:
+ p okuyama.set_value_version_check("key1", "val1_0", "1332676579458792037") # => true
+ p okuyama.set_value_version_check("key1", "VAL1_1", "0") # => nil
+ p okuyama.get_value("key1") # => "val1_0"
+
+Create index:
+ p okuyama.set_value_and_create_index("key1", "val1") # => true
+ p okuyama.set_value_and_create_index("key2", "val2") # => true
+ 
+Search with query:
+ p okuyama.search_query("val") # => ["key2", "key1"]
+ p okuyama.search_query("empty") # => []
+ 
 == Contributing to okuyama
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
