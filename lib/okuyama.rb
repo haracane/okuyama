@@ -5,9 +5,16 @@ autoload :Logger, 'logger'
 
 module Okuyama
   autoload :Client, 'okuyama/client'
-  autoload :Protocol, 'okuyama/protocol'
+  module Protocol
+    autoload :Version1, 'okuyama/protocol/version1'
+  end
 
+  # generic error
   class OkuyamaError < RuntimeError; end
+  # socket/server communication error
+  class NetworkError < OkuyamaError; end
+  # server error
+  class ServerError < OkuyamaError; end
 
   def self.logger
     @logger ||= (rails_logger || default_logger)

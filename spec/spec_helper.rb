@@ -4,7 +4,7 @@ require 'rspec'
 require 'okuyama'
 
 Okuyama.logger = Logger.new(STDERR)
-Okuyama.logger.level = Logger::ERROR
+Okuyama.logger.level = Logger::DEBUG
 
 # Requires supporting files with custom matchers and macros, etc,
 # in ./support/ and its subdirectories.
