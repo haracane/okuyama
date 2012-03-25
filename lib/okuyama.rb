@@ -5,6 +5,7 @@ autoload :Logger, 'logger'
 
 module Okuyama
   autoload :Client, 'okuyama/client'
+  autoload :FastClient, 'okuyama/fast_client'
   module Protocol
     autoload :Version1, 'okuyama/protocol/version1'
   end
