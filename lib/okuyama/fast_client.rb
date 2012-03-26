@@ -180,12 +180,13 @@ module Okuyama
     protected
     def each(&block)
       return if ! @recv_flag
-      while line = socket.gets do
-        line.chomp!
-        if line == "END" then
+      while result = socket.gets do
+        result.chomp!
+        if result == "END" then
           break
         else
-          yield(self.parse_result(line))
+          result = self.parse_result(result) if @parse_flag
+          yield(result)
         end
       end
     end
@@ -193,12 +194,13 @@ module Okuyama
     def readlines
       return if ! @recv_flag
       ret = []
-      while line = socket.gets do
-        line.chomp!
-        if line == "END" then
+      while result = socket.gets do
+        result.chomp!
+        if result == "END" then
           break
         else
-          ret.push self.parse_result(line)
+          result = self.parse_result(result) if @parse_flag
+          ret.push result
         end
       end
       return ret
