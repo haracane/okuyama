@@ -1,0 +1,15 @@
+=== Version 0.2.1 / 2012-03-26
+
+This release improves errors.
+
+=== Version 0.2.0 / 2012-03-26
+
+This release adds recv_* methods to Okuyama::Client.
+
+=== Version 0.1.0 / 2012-03-25
+
+This release adds implements all protocol messages.
+
+=== Version 0.0.1 / 2012-03-25
+
+This is the first preview release of okuyama client for Ruby.
