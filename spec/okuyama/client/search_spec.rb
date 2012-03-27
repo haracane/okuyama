@@ -65,14 +65,12 @@ describe Okuyama::Client do
       describe "set_value_and_create_index(key, val, :tags=>tags, :group=>group, :min_n=>min_n, :max_n=>max_n)" do
         describe "when key exists," do
           it "should success" do
-            Okuyama.logger.debug("send: #{@client.protocol.message_of_set_value_and_create_index(@testkey1, @testval1, @testtag, @testgroup, '1', '3').inspect}")
             result = @client.set_value_and_create_index(@testkey1, @testval1, :tags=>[@testtag], :group=>@testgroup, :min_n=>1, :max_n=>3)
             result.should be_true
           end
         end
         describe "when key does not exist," do
           it "should success" do
-            Okuyama.logger.debug("send: #{@client.protocol.message_of_set_value_and_create_index(@testnewkey, @testnewval, @testnewtag, @testnewgroup, '1', '3').inspect}")
             result = @client.set_value_and_create_index(@testnewkey, @testnewval, :tags=>[@testnewtag], :group=>@testnewgroup, :min_n=>1, :max_n=>3)
             result.should be_true
           end
@@ -82,7 +80,6 @@ describe Okuyama::Client do
       describe "search_value(query)" do
         describe "when key exists," do
           it "should return keys" do
-            Okuyama.logger.debug("send: #{@client.protocol.message_of_search_value([@testquery1]).inspect}")
             result = @client.search_value(@testquery1)
             result.sort!
             result.should == [@testkey1]
@@ -100,7 +97,6 @@ describe Okuyama::Client do
         if false then
           describe "when key exists," do
             it "should return keys" do
-              Okuyama.logger.debug("send: #{@client.protocol.message_of_search_value([@testquery1, @testquery2], '1', @testgroup, '3').inspect}")
               result = @client.search_value([@testquery1, @testquery2], :condition=>:and, :group=>@testgroup, :nsize=>3)
               result.sort!
               result.should == ['testkey1']
@@ -119,7 +115,6 @@ describe Okuyama::Client do
         if false then
           describe "when key exists," do
             it "should return keys" do
-              Okuyama.logger.debug("send: #{@client.protocol.message_of_search_value([@testquery1, @testquery2], '2', @testgroup, '3').inspect}")
               result = @client.search_value([@testquery1, @testquery2], :condition=>:or, :group=>@testgroup, :nsize=>3)
               result.sort!
               result.should == ['testkey1']

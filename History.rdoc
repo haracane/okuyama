@@ -1,3 +1,10 @@
+=== Version 0.2.2 / 2012-03-27
+
+This release adds send_* methods to Okuyama::Client.
+
+* removes unnecessary method definition.
+* define similar methods with eval
+
 === Version 0.2.1 / 2012-03-26
 
 This release improves errors.
