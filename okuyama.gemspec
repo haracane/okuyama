@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "okuyama"
-  s.version = "0.2.1"
+  s.version = "0.2.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kenji Hara"]
-  s.date = "2012-03-26"
+  s.date = "2012-03-27"
   s.description = "okuyama client for Ruby"
   s.email = "haracane@gmail.com"
   s.extra_rdoc_files = [
@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
     ".rspec",
     "Gemfile",
     "Gemfile.lock",
+    "History.rdoc",
     "LICENSE.txt",
     "README.rdoc",
     "Rakefile",
