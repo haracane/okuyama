@@ -117,18 +117,16 @@ module Okuyama
         socket.puts opcode
       end
       def send_set_value(socket, opcode, key, tag_list, val, version=nil)
-        key_base64 = self.encode(key)
-        val_base64 = self.encode(val)
         dlock = '0'
         socket.print opcode
         socket.print ","
-        socket.print  key_base64
+        self.print_encode socket, key
         socket.print ","
         self.print_tag_list socket, tag_list
         socket.print ","
         socket.print  dlock
         socket.print ","
-        socket.print  val_base64
+        self.print_encode socket, val
 
         if version then
           socket.print ","
@@ -138,27 +136,25 @@ module Okuyama
       end
       
       def send_get_value(socket, opcode, key)
-        key_base64 = self.encode(key)
         socket.print opcode
         socket.print ","
-        socket.print  key_base64
+        self.print_encode socket, key
         socket.puts
       end
       
       def send_get_tag_keys(socket, opcode, tag, flag)
         socket.print opcode
         socket.print ","
-        socket.print  self.encode(tag)
+        self.print_encode socket, tag
         socket.print ","
         socket.print  flag
         socket.puts
       end
 
       def send_remove_value(socket, opcode, key, dlock='0')
-        key_base64 = self.encode(key)
         socket.print opcode
         socket.print ","
-        socket.print  key_base64
+        self.print_encode socket, key
         socket.print ","
         socket.print  dlock
         socket.puts
@@ -169,66 +165,59 @@ module Okuyama
       alias :send_set_value_version_check :send_set_value
 
       def send_incr_value(socket, opcode, key, val)
-        key_base64 = self.encode(key)
-        val_base64 = self.encode(val)
         dlock = '0'
         socket.print opcode
         socket.print ","
-        socket.print  key_base64
+        self.print_encode socket, key
         socket.print ","
         socket.print  dlock
         socket.print ","
-        socket.print  val_base64
+        self.print_encode socket, val
         socket.puts
       end
       
       alias :send_decr_value :send_incr_value
       
       def send_get_multi_value(socket, opcode, key_list)
-        keys_base64 = key_list.map{|key|self.encode(key)}.join(',')
         socket.print opcode
-        socket.print ","
-        socket.print  keys_base64
+        key_list.each do |key|
+          socket.print ","
+          self.print_encode socket, key
+        end
         socket.puts
       end
 
       def send_get_tag_values(socket, opcode, tag)
-        tag_base64 = self.encode(tag)
         socket.print opcode
         socket.print ","
-        socket.print  tag_base64
+        self.print_encode socket, tag
         socket.puts
       end
 
       def send_remove_tag_from_key(socket, opcode, tag, key)
-        tag_base64 = self.encode(tag)
-        key_base64 = self.encode(key)
         dlock = '0'
         socket.print opcode
         socket.print ","
-        socket.print  tag_base64
+        self.print_encode socket, tag
         socket.print ","
-        socket.print  key_base64
+        self.print_encode socket, key
         socket.print ","
         socket.print  dlock
         socket.puts
       end
 
       def send_set_value_and_create_index(socket, opcode, key, val, tag_list=nil, group=nil, min_index_n='1', max_index_n='3')
-        key_base64 = self.encode(key)
-        val_base64 = self.encode(val)
-
         dlock = '0'
 
         socket.print opcode
         socket.print ","
-        socket.print  key_base64
+        self.print_encode socket, key
         socket.print ","
         self.print_tag_list socket, tag_list
         socket.print ","
         socket.print  dlock
         socket.print ","
-        socket.print  val_base64
+        self.print_encode socket, val
         socket.print ","
         self.print_group socket, group
         socket.print ","
@@ -254,7 +243,7 @@ module Okuyama
       
       def print_group(socket, group)
         if group then
-          socket.print self.encode(group)
+          self.print_encode socket, group
         else
           socket.print  "(B)"
         end
@@ -271,10 +260,10 @@ module Okuyama
       def print_key_list(socket, key_list)
         lsize = key_list.size
         k = key_list[0]
-        socket.print self.encode(k) if k
+        self.print_encode socket, k if k
         (lsize-1).times do |i|
           socket.print ':'
-          socket.print self.encode(key_list[i+1])
+          self.print_encode socket, key_list[i+1]
         end
       end
       alias :print_query_list :print_key_list
