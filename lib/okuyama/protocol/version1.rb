@@ -13,9 +13,19 @@ module Okuyama
         return '1.0.0'
       end
       
+      def print_encode(socket, text)
+        if @base64_encode_flag then
+          Base64.encode64(text).split.each do |line|
+            socket.print line
+          end
+        else
+          socket.print text
+        end
+      end
+      
       def encode(text)
         return text if ! @base64_encode_flag
-        return Base64.encode64(text).chomp
+        return Base64.encode64(text).split.join
       end
       
       def decode(text)
