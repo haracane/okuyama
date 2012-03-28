@@ -1,4 +1,4 @@
-=== Version 0.2.3 / 2012-03-27
+=== Version 0.2.3 / 2012-03-28
 
 This release fixes bugs of base64 encoding
 
