@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "okuyama"
-  s.version = "0.2.2"
+  s.version = "0.2.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kenji Hara"]
-  s.date = "2012-03-27"
+  s.date = "2012-03-28"
   s.description = "okuyama client for Ruby"
   s.email = "haracane@gmail.com"
   s.extra_rdoc_files = [
@@ -32,9 +32,6 @@ Gem::Specification.new do |s|
     "lib/okuyama/protocol/abstract_protocol.rb",
     "lib/okuyama/protocol/version1.rb",
     "okuyama.gemspec",
-    "spec/okuyama/client/decr_value_spec.rb",
-    "spec/okuyama/client/incr_value_spec.rb",
-    "spec/okuyama/client/search_spec.rb",
     "spec/okuyama/client_spec.rb",
     "spec/okuyama/protocol/version1_spec.rb",
     "spec/okuyama_spec.rb",
