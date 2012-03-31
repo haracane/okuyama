@@ -123,10 +123,11 @@ module Okuyama
         case condition
         when :and
           condition = '1'
-        else :or
+        when :or
           condition = '2'
         end
       end
+      condition ||= '1'
 
       super(query_list, condition, group, nsize)
     end

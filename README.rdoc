@@ -2,6 +2,13 @@
 
 'okuyama' is a high performance pure Ruby client for accessing okuyama master nodes.
 
+== Supported Ruby versions and implementations
+okuyama should work identically on:
+
+* Ruby 1.9.3+
+* Ruby 1.9.2+
+* Ruby 1.8.7+
+
 == Install
 
 You can install okuyama by gem.

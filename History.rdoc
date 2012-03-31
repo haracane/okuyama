@@ -1,6 +1,10 @@
+=== Version 0.2.4 / 2012-03-31
+
+This release supports Ruby 1.9.2 & Ruby 1.9.3.
+
 === Version 0.2.3 / 2012-03-28
 
-This release fixes bugs of base64 encoding
+This release fixes bugs of base64 encoding.
 
 === Version 0.2.2 / 2012-03-27
 
